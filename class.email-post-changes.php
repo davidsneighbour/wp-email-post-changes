@@ -100,8 +100,8 @@ class Email_Post_Changes {
 		$text_diffs = array();
 		$identical = true;
 		foreach ( _wp_post_revision_fields() as $field => $field_title ) {
-			$left = apply_filters( "_wp_post_revision_field_$field", $this->left_post->$field, $field );
-			$right = apply_filters( "_wp_post_revision_field_$field", $this->right_post->$field, $field );
+			$left = apply_filters( "_wp_post_revision_field_$field", $this->left_post->$field, $field, $this->left_post, 'from' );
+			$right = apply_filters( "_wp_post_revision_field_$field", $this->right_post->$field, $field, $this->right_post, 'to' );
 
 			if ( !$diff = $this->wp_text_diff( $left, $right ) )
 				continue;
@@ -245,10 +245,15 @@ class Email_Post_Changes {
 	function phpmailer_init( &$phpmailer ) {
 		$phpmailer->AltBody = $this->text_diff;
 
-		$phpmailer->AddReplyTo(
-			get_the_author_meta( 'email', $this->right_post->post_author ),
-			get_the_author_meta( 'display_name', $this->right_post->post_author )
-		);
+		$author_email = get_the_author_meta( 'email', $this->right_post->post_author );
+		$author_name  = get_the_author_meta( 'display_name', $this->right_post->post_author );
+
+		if ( ! empty( $author_email ) && ! empty( $author_name ) ) {
+			$phpmailer->AddReplyTo(
+				$author_email,
+				$author_name
+			);
+		}
 	}
 
 	function get_post_type_label( $post_type ) {
